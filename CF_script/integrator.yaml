@@ -459,110 +459,6 @@ Resources:
           FromPort: '8140'
           ToPort: '8140'
           CidrIp: 0.0.0.0/0
-  # WSO2EINode1LaunchConfiguration:
-  #   Type: 'AWS::AutoScaling::LaunchConfiguration'
-  #   Properties:
-  #     ImageId: !FindInMap
-  #       - WSO2EIAMIRegionMap
-  #       - !Ref 'AWS::Region'
-  #       - Ubuntu180464bit
-  #     InstanceType: !Ref WSO2InstanceType
-  #     BlockDeviceMappings:
-  #       - DeviceName: /dev/sda1
-  #         Ebs:
-  #           VolumeSize: '20'
-  #           VolumeType: gp2
-  #           DeleteOnTermination: 'true'
-  #     KeyName: !Ref KeyPairName
-  #     SecurityGroups:
-  #       - !Ref WSO2EISecurityGroup
-  #     UserData: !Base64
-  #       'Fn::Join':
-  #         - |+
-  #
-  #         - - '#!/bin/bash'
-  #           - 'export PATH=~/.local/bin:$PATH'
-  #           - apt-get update
-  #           - apt-get install -y puppet
-  #           - apt-get install -y nfs-common
-  #           - sed -i '/\[main\]/a server=puppet' /etc/puppet/puppet.conf
-  #           - !Join
-  #             - ''
-  #             - - export PuppetmasterIP=
-  #               - !GetAtt
-  #                 - PuppetMaster
-  #                 - PrivateIp
-  #           - echo "${PuppetmasterIP} puppet puppetmaster" >> /etc/hosts
-  #           - service puppet restart
-  #           - mkdir -p /mnt/efs
-  #           - !Sub "mount -t nfs4 -o nfsvers=4.1 ${WSO2EIEFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ /mnt/efs"
-  #           - sleep 180
-  #           - export FACTER_profile=ei_integrator
-  #           - puppet agent -vt
-  #           - 'if [ ! -d "/mnt/efs/deployment/server" ]; then'
-  #           - '    mkdir -p /mnt/efs/deployment/server'
-  #           - '    cp -r /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/deployment/server /mnt/efs/deployment'
-  #           - fi
-  #           - >-
-  #           - rm -rf /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/wso2ei-6.4.0/repository/deployment/server
-  #           - >-
-  #             ln -sf /mnt/efs/deployment/server
-  #             /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/wso2ei-6.4.0/repository/deployment/server
-  #           - 'if [ ! -d "/mnt/efs/tenants" ]; then'
-  #           - '    mkdir -p /mnt/efs/tenants'
-  #           - '    cp -r /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/wso2ei-6.4.0/repository/tenants /mnt/efs'
-  #           - fi
-  #           - >-
-  #             rm -rf
-  #             /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/wso2ei-6.4.0/repository/tenants
-  #           - >-
-  #             ln -s /mnt/efs/tenants
-  #             /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/wso2ei-6.4.0/repository/tenants
-  #           - apt-get install -y python3-pip
-  #           - pip3 install boto3
-  #           - echo "${WSO2EIEFSFileSystem}:/ /mnt/efs efs defaults,_netdev 0 0" >> /etc/fstab
-  #           - !Sub "PRIVATE_IP=$(python3 /usr/local/bin/private_ip_extractor.py ${AWS::Region} ${AWSAccessKeyId} ${AWSAccessKeySecret} WSO2EIInstance1)"
-  #           - !Join
-  #             - ''
-  #             - - sed -i "s/LOCAL-MEMBER-HOST/
-  #               - $PRIVATE_IP
-  #               - >-
-  #                 /g"
-  #                 /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/conf/axis2/axis2.xml
-  #           - /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/bin/integrator.sh start
-  #           - echo 'export HISTTIMEFORMAT="%F %T "' >> /etc/profile.d/history.sh
-  #           - cat /dev/null > ~/.bash_history && history -c
-  #   DependsOn:
-  #     - WSO2EISecurityGroup
-  #     - WSO2EILoadBalancer
-  #     - WSO2EIVPCInternetGatewayAttachment
-  #     - WSO2EIDBInstance
-  #     - PuppetMaster
-  # WSO2EINode1AutoScalingGroup:
-  #   Type: 'AWS::AutoScaling::AutoScalingGroup'
-  #   CreationPolicy:
-  #     ResourceSignal:
-  #       Count: '1'
-  #       Timeout: PT60M
-  #   Properties:
-  #     LaunchConfigurationName: !Ref WSO2EINode1LaunchConfiguration
-  #     DesiredCapacity: 1
-  #     MinSize: 1
-  #     MaxSize: 1
-  #     LoadBalancerNames:
-  #       - !Ref WSO2EILoadBalancer
-  #     VPCZoneIdentifier:
-  #       - !Ref WSO2EIPrivateSubnet1
-  #     Tags:
-  #       - Key: Name
-  #         Value: WSO2EIInstance1
-  #         PropagateAtLaunch: 'true'
-  #       - Key: cluster
-  #         Value: ei
-  #         PropagateAtLaunch: 'true'
-  #   DependsOn:
-  #     - WSO2EILoadBalancer
-  #     - WSO2EINode1LaunchConfiguration
   WSO2EINode2LaunchConfiguration:
     Type: 'AWS::AutoScaling::LaunchConfiguration'
     Properties:
@@ -598,42 +494,9 @@ Resources:
                   - PrivateIp
             - echo "${PuppetmasterIP} puppet puppetmaster" >> /etc/hosts
             - service puppet restart
-            - mkdir -p /mnt/efs
-            - !Sub "mount -t nfs4 -o nfsvers=4.1 ${WSO2EIEFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ /mnt/efs"
             - sleep 200
             - export FACTER_profile=ei_integrator
             - puppet agent -vt
-            - 'if [ ! -d "/mnt/efs/deployment/server" ]; then'
-            - '    mkdir -p /mnt/efs/deployment/server'
-            - '    cp -r /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/deployment/server /mnt/efs/deployment'
-            - fi
-            - >-
-              rm -rf
-              /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/deployment/server
-            - >-
-              ln -s /mnt/efs/deployment/server
-              /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/deployment/server
-            - 'if [ ! -d "/mnt/efs/tenants" ]; then'
-            - '    mkdir -p /mnt/efs/tenants'
-            - '    cp -r /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/tenants /mnt/efs'
-            - fi
-            - >-
-              rm -rf
-              /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/tenants
-            - >-
-              ln -s /mnt/efs/tenants
-              /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/repository/tenants
-            - apt-get install -y python3-pip
-            - pip3 install boto3
-            - echo "${WSO2EIEFSFileSystem}:/ /mnt/efs efs defaults,_netdev 0 0" >> /etc/fstab
-            - !Sub "PRIVATE_IP=$(python3 /usr/local/bin/private_ip_extractor.py ${AWS::Region} ${AWSAccessKeyId} ${AWSAccessKeySecret} WSO2EIInstance2)"
-            - !Join
-              - ''
-              - - sed -i "s/LOCAL-MEMBER-HOST/
-                - $PRIVATE_IP
-                - >-
-                  /g"
-                  /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/conf/axis2/axis2.xml
             - /usr/lib/wso2/wso2ei/6.4.0/wso2ei-6.4.0/bin/integrator.sh start
             - echo 'export HISTTIMEFORMAT="%F %T "' >> /etc/profile.d/history.sh
             - cat /dev/null > ~/.bash_history && history -c
@@ -870,9 +733,9 @@ Mappings:
     eu-west-1:
       Ubuntu180464bit: ami-0ea3b70805378f796
     us-east-1:
-      Ubuntu180464bit: ami-0237f6c17dba2a063
+      Ubuntu180464bit: ami-03614f04d9bec4e8f
     us-east-2:
-      Ubuntu180464bit: ami-0726eec7b0ed46d24
+      Ubuntu180464bit: ami-042979e3e34ae16e0
     us-west-1:
       Ubuntu180464bit: ami-01c303b902735f14b
     us-west-2:
