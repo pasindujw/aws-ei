@@ -701,11 +701,6 @@ Parameters:
   DBEngine:
     Type: String
     Default: MySQL_5.6
-    AllowedValues:
-      - MySQL_5.7
-      - MySQL_5.6
-      - Oracle
-      - MSSQL
   DBUsername:
     Type: String
     MinLength: 4
